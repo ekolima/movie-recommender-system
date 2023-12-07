@@ -1,31 +1,36 @@
 import pandas as pd
 import numpy as np
-import time
 import string
 import os
 
 
-def get_ratings(dataset='u.data', directory='ml-100k'):
-    df = pd.read_csv(os.path.join(directory, dataset), sep='\t', header=None, encoding='utf-8')
+def get_ratings(dataset='ratings.csv', directory='ml-latest-small'):
+    df = pd.read_csv(os.path.join(directory, dataset), sep=',', header=0, encoding='utf-8')
     df.columns = ['user id', 'item id', 'rating', 'timestamp']
-    return df
-
-
-def get_tags(dataset='tags.csv', directory='data'):
-    df = pd.read_csv(os.path.join(directory, dataset), sep=',', encoding='utf-8')
-    df.columns = ['user id', 'movie id', 'tag', 'timestamp']
-    df['tag'] = df['tag'].astype('str')
+    print(f'Dataset: {dataset} | Rows: {df.shape[0]} | Columns: {df.shape[1]}')
     return df.drop('timestamp', axis=1)
 
 
-def get_movies(dataset='u.item', directory='ml-100k'):
-    df = pd.read_table(os.path.join(directory, dataset), sep='|', header=None, encoding='iso-8859-1')
-    df.columns = ['movie id', 'movie title', 'release date', 'video release date', 'IMDb URL', 'unknown', 'Action',
-                  'Adventure', 'Animation', 'Childrens', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
-                  'Film-Noir', 'Horror', 'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War',
-                  'Western']
-    df = df.loc[:, ['movie id', 'movie title']]
+def get_tags(dataset='tags.csv', directory='ml-latest-small'):
+    df = pd.read_csv(os.path.join(directory, dataset), sep=',', header=0, encoding='utf-8')
+    df.columns = ['user id', 'movie id', 'tag', 'timestamp']
+    df['tag'] = df['tag'].astype('str')
+    print(f'Dataset: {dataset} | Rows: {df.shape[0]} | Columns: {df.shape[1]}')
+    return df.drop('timestamp', axis=1)
+
+
+def get_links(dataset='links.csv', directory='ml-latest-small'):
+    df = pd.read_table(os.path.join(directory, dataset), sep=',', header=0, encoding='utf-8')
+    df.columns = ['movie id', 'imdb id', 'tmdb id']
+    print(f'Dataset: {dataset} | Rows: {df.shape[0]} | Columns: {df.shape[1]}')
     return df
+
+
+def get_movies(dataset='movies.csv', directory='ml-latest-small'):
+    df = pd.read_table(os.path.join(directory, dataset), sep=',', header=0, encoding='utf-8')
+    df.columns = ['movie id', 'movie title', 'genres']
+    print(f'Dataset: {dataset} | Rows: {df.shape[0]} | Columns: {df.shape[1]}')
+    return df.loc[:, ['movie id', 'movie title']]
 
 
 def generate_keywords(df):
@@ -49,9 +54,3 @@ def generate_keywords(df):
     df = df.loc[~df['text'].isin(stopwords)]
 
     return df
-
-
-
-
-def extract_ratings(id, ratings, id_type='user id'):
-    return ratings[ratings[id_type] == id]
