@@ -1,8 +1,11 @@
 import argparse
 import os
-import load_data
+from load_data import get_data
 import metrics
 import algorithms
+import warnings
+from utils import *
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 # set up argument parser
@@ -69,26 +72,9 @@ except ValueError:
 
 
 # load data
-def get_data(algorithm, data_directory):
-    # load ratings for user and item based algorithms
-    if algorithm == 'user' or algorithm == 'item':
-        data = load_data.get_ratings(directory=data_directory)
+data = get_data(data_directory)
+# TODO: check if input is in data
 
-    # load tags for tag based algorithm
-    if algorithm == 'tag':
-        data = load_data.get_tags(directory=data_directory)
-
-    # load movies and generate keywords for content based algorithm
-    if algorithm == 'title':
-        movies = load_data.get_movies(directory=data_directory)
-        data = load_data.generate_keywords(movies)
-
-    if algorithm == 'hybrid':
-        ratings = load_data.get_ratings(directory=data_directory)
-        tags = load_data.get_tags(directory=data_directory)
-        data = {'ratings': ratings, 'tags': tags}
-
-    return data
 
 # set up similarity metric and algorithm dictionaries
 similarity_dict = {'jaccard': metrics.jaccard, 'dice': metrics.dice,
@@ -98,9 +84,13 @@ algorithm_dict = {'user': algorithms.user_user, 'item': algorithms.item_item,
                   'tag': algorithms.tag_based, 'title': algorithms.content_based,
                   'hybrid': algorithms.hybrid}
 
+data_dict = {'user': data['ratings'], 'item': data['ratings'], 'tag': data['tags'],
+             'title': data['keywords'], 'hybrid': data}
+
+
 # get recommendations
-result = algorithm_dict[algorithm](user_id=int(input),
-                                   data=get_data(algorithm, data_directory),
+result = algorithm_dict[algorithm](id=int(input),
+                                   data=data_dict[algorithm],
                                    n=number,
                                    similarity=similarity_dict[similarity_metric])
 

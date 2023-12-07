@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import string
 import os
 
@@ -54,3 +53,20 @@ def generate_keywords(df):
     df = df.loc[~df['text'].isin(stopwords)]
 
     return df
+
+
+def get_data(data_directory='ml-latest-small'):
+    print('--------------------------------------------------------------------------------')
+    print(f'Loading data from directory {data_directory}')
+
+    try:
+        ratings = get_ratings(directory=data_directory)
+        tags = get_tags(directory=data_directory)
+        movies = get_movies(directory=data_directory)
+        keywords = generate_keywords(movies)
+    except Exception as e:
+        print(f'Error: {e}')
+        return None
+
+    print('--------------------------------------------------------------------------------')
+    return {'ratings': ratings, 'tags': tags, 'movies': movies, 'keywords': keywords}
