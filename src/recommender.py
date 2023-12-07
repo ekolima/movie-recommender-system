@@ -4,7 +4,7 @@ from load_data import get_data
 import metrics
 import algorithms
 import warnings
-from utils import *
+from validators import *
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -32,48 +32,28 @@ input = args.input
 
 # validate arguments
 # check if data directory exists
-if not os.path.isdir(data_directory):
-    raise ValueError('Data directory does not exist')
-
+validate_directory(data_directory)
 
 # check if similarity metric is valid
-if similarity_metric not in ['jaccard', 'dice', 'cosine', 'pearson']:
-    raise ValueError('Similarity metric not valid. Valid similarity metrics are: jaccard, dice, cosine, pearson')
+validate_metrics(similarity_metric)
 
 # check if algorithm is valid
-if algorithm not in ['user', 'item', 'tag', 'title', 'hybrid']:
-    raise ValueError('Algorithm not valid. Valid algorithms are: user, item, tag, title, hybrid')
+validate_algorithms(algorithm)
 
 # check if number is a number
-try:
-    old_number = number
-    number = int(number)
-    if number != float(old_number):
-        raise ValueError('Number of recommendations must be an integer')
-    del old_number
-except ValueError:
-    raise ValueError('Number of recommendations must be an integer')
+validate_is_number(number, 'Number of recommendations')
+number = int(number)
+validate_positive_number(number, 'Number of recommendations')
 
-# check if number is positive
-if number <= 0:
-    raise ValueError('Number of recommendations must be positive')
-
-# check if input is number
-try:
-    old_input = input
-    input = int(input)
-    if input != float(old_input):
-        raise ValueError('Input id must be an integer')
-    del old_input
-except ValueError:
-    raise ValueError('Input id must be an integer')
-
-# TODO: check if input is in data
-
+# check if input is a number
+validate_is_number(input, 'Input id')
+input = int(input)
 
 # load data
 data = get_data(data_directory)
-# TODO: check if input is in data
+
+# check if input is in data
+validate_input(input, data, algorithm)
 
 
 # set up similarity metric and algorithm dictionaries
