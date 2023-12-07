@@ -151,12 +151,14 @@ def content_based(id, data, n, similarity=jaccard, return_scores=False):
 
 # combine all methods
 def hybrid(id, data, n, similarity=jaccard, return_scores=False):
-    # get top recommendation score using user-user and item-item
-    user_user_recommendations = user_user(id, data, None, similarity, return_scores=True)
-    item_item_recommendations = item_item(id, data, None, pearson_matrix, return_scores=True)
-    # TODO: add 1 more methodology
+    # data
+    ratings, tags = data['ratings'], data['tags']
 
-    # merge scores
+    # get top recommendation score using user-user and item-item
+    user_user_recommendations = user_user(id, ratings, None, similarity, return_scores=True)
+    item_item_recommendations = item_item(id, ratings, None, pearson_matrix, return_scores=True)
+
+    # merge user user and item item scores
     user_user_recommendations = pd.DataFrame({'movie id': list(user_user_recommendations.keys()),
                                               'score': list(user_user_recommendations.values())})
     item_item_recommendations = pd.DataFrame({'movie id': list(item_item_recommendations.keys()),
@@ -166,6 +168,28 @@ def hybrid(id, data, n, similarity=jaccard, return_scores=False):
     # combine recommendations
     all_recommendations['score'] = all_recommendations['score_user'] + all_recommendations['score_item']
     all_recommendations = all_recommendations.drop(['score_user', 'score_item'], axis=1)
+
+    # get top N*5 recommendations to apply tag-based and content-based algorithms
+    all_recommendations = all_recommendations.sort_values('score', ascending=False).head(n*5)
+
+    # get tag based recommendations for top N*5 recommendations
+    tag_based_results = dict()
+    for m in all_recommendations['movie id'].to_list():
+        print(m)
+        tag_based_results[m] = tag_based(m, tags, None, similarity, return_scores=True)
+
+    tag_based_results_long = pd.DataFrame(tag_based_results).unstack().reset_index()
+    tag_based_results_long.columns = ['movie id', 'movie suggested', 'score']
+    tag_based_results_long = tag_based_results_long.loc[tag_based_results_long['movie id'] != tag_based_results_long['movie suggested']]
+    tag_based_results_long = tag_based_results_long.loc[tag_based_results_long['score'] > 0]
+
+    tags_score = tag_based_results_long.groupby(['movie suggested'], as_index=False).agg({'score': 'sum'})
+    tags_score.columns = ['movie id', 'score']
+
+    # merge tag based recommendations with user-user and item-item recommendations
+    all_recommendations = all_recommendations.merge(tags_score, on='movie id', how='outer').fillna(0)
+    all_recommendations['score'] = all_recommendations['score_x'] + all_recommendations['score_y']
+    all_recommendations = all_recommendations.drop(['score_x', 'score_y'], axis=1)
 
     # get top n recommendations
     all_recommendations = all_recommendations.sort_values('score', ascending=False).head(n)

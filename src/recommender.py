@@ -83,7 +83,11 @@ def get_data(algorithm, data_directory):
         movies = load_data.get_movies(directory=data_directory)
         data = load_data.generate_keywords(movies)
 
-    # TODO: hybrid algorithm loads
+    if algorithm == 'hybrid':
+        ratings = load_data.get_ratings(directory=data_directory)
+        tags = load_data.get_tags(directory=data_directory)
+        data = {'ratings': ratings, 'tags': tags}
+
     return data
 
 # set up similarity metric and algorithm dictionaries
