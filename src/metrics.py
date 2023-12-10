@@ -116,3 +116,89 @@ def pearson_matrix(matrix, x_target, k=128):
     matrix = matrix.apply(lambda row: sum(row * target_row)/(np.sqrt(sum(row ** 2)) * target_row_sqrt), axis=1)
     return matrix.sort_values(ascending=False).head(k)
 
+
+def jaccard_similarity_matrix(user_item_matrix):
+    # Convert the user-item matrix to a binary matrix (1 if rated, 0 otherwise)
+    zero_one_matrix = np.where(user_item_matrix > 0, 1, 0)
+    binary_matrix = user_item_matrix > 0
+
+    # Calculate the Jaccard similarity matrix
+    numerator = zero_one_matrix @ zero_one_matrix.T
+    denominator = np.clip(binary_matrix.sum(axis=1).values.reshape(-1, 1) + binary_matrix.sum(axis=1).values - numerator, 1, None)
+    jaccard_matrix = numerator / denominator
+
+    # Set the diagonal elements to 1.0
+    jaccard_matrix = np.asmatrix(jaccard_matrix)
+    np.fill_diagonal(jaccard_matrix, 1.0)
+
+    # Convert the NumPy array to a DataFrame with user IDs as index and columns
+    user_similarity_matrix = pd.DataFrame(jaccard_matrix, index=user_item_matrix.index, columns=user_item_matrix.index)
+
+    return user_similarity_matrix
+
+
+def dice_similarity_matrix(user_item_matrix):
+    # Convert the user-item matrix to a binary matrix (1 if rated, 0 otherwise)
+    zero_one_matrix = np.where(user_item_matrix > 0, 1, 0)
+    binary_matrix = user_item_matrix > 0
+
+    # Calculate the Jaccard similarity matrix
+    numerator = zero_one_matrix @ zero_one_matrix.T
+    denominator = np.clip(binary_matrix.sum(axis=1).values.reshape(-1, 1) + binary_matrix.sum(axis=1).values, 1, None)
+    jaccard_matrix = 2 * numerator / denominator
+
+    # Set the diagonal elements to 1.0
+    jaccard_matrix = np.asmatrix(jaccard_matrix)
+    np.fill_diagonal(jaccard_matrix, 1.0)
+
+    # Convert the NumPy array to a DataFrame with user IDs as index and columns
+    user_similarity_matrix = pd.DataFrame(jaccard_matrix, index=user_item_matrix.index, columns=user_item_matrix.index)
+
+    return user_similarity_matrix
+
+
+def cosine_similarity_matrix(user_item_matrix):
+    # Calculate the cosine similarity matrix using NumPy's dot product
+    cosine_matrix = user_item_matrix.dot(user_item_matrix.T) / (
+        np.linalg.norm(user_item_matrix, axis=1).reshape(-1, 1) *
+        np.linalg.norm(user_item_matrix, axis=1)
+    )
+
+    cosine_matrix = np.asmatrix(cosine_matrix)
+    # Set the diagonal elements to 1.0
+    np.fill_diagonal(cosine_matrix, 1.0)
+
+    # Convert the NumPy array to a DataFrame with user IDs as index and columns
+    user_similarity_matrix = pd.DataFrame(cosine_matrix, index=user_item_matrix.index, columns=user_item_matrix.index)
+
+    return user_similarity_matrix
+
+
+def pearson_similarity_matrix(user_item_matrix):
+    # Convert the DataFrame to a NumPy matrix
+    ratings_matrix = user_item_matrix.values
+
+    # Calculate the mean of each user's ratings
+    mean_ratings = np.nanmean(ratings_matrix, axis=1, keepdims=True)
+
+    # Center the ratings matrix by subtracting the mean
+    centered_ratings = ratings_matrix - mean_ratings
+
+    # Calculate the square root of the sum of squared ratings
+    norm_ratings = np.sqrt(np.nansum(centered_ratings**2, axis=1, keepdims=True))
+    norm_ratings = np.where(norm_ratings == 0, np.nan, norm_ratings)
+
+    # Calculate the normalized ratings matrix
+    normalized_ratings = np.true_divide(centered_ratings, norm_ratings)
+    normalized_ratings = np.nan_to_num(normalized_ratings)
+
+    # Calculate the Pearson similarity matrix using matrix multiplication
+    pearson_matrix = np.dot(normalized_ratings, normalized_ratings.T)
+
+    # Set the diagonal elements to 1.0
+    pearson_matrix = np.asmatrix(pearson_matrix)
+    np.fill_diagonal(pearson_matrix, 1.0)
+
+    user_similarity_matrix = pd.DataFrame(pearson_matrix, index=user_item_matrix.index, columns=user_item_matrix.index)
+
+    return user_similarity_matrix
