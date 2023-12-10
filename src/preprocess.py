@@ -20,7 +20,7 @@ import time
 # parse arguments
 # args = parser.parse_args()
 # data_directory = args.data_directory
-data_directory = '../ml-100k'
+data_directory = '../ml-latest-small'
 
 # validate arguments
 # check if data directory exists

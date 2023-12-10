@@ -63,10 +63,9 @@ def get_data(data_directory='ml-latest-small'):
         ratings = get_ratings(directory=data_directory)
         tags = get_tags(directory=data_directory)
         movies = get_movies(directory=data_directory)
-        keywords = generate_keywords(movies)
+        keywords = generate_keywords(movies.copy())
     except Exception as e:
         print(f'Error: {e}')
         return None
 
-    print('--------------------------------------------------------------------------------')
     return {'ratings': ratings, 'tags': tags, 'movies': movies, 'keywords': keywords}
