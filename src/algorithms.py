@@ -1,7 +1,7 @@
 import pandas as pd
 
-from src.metrics import *
-from src.load_data import extract_ratings
+from metrics import *
+from utils import extract_ratings
 
 
 def n_most_similar(all_users, ratings, user_ratings, k=128):
