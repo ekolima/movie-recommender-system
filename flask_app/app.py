@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 import sys
 import os
 
-sys.path.append(os.path.abspath('../src'))
+sys.path.append(os.path.abspath('src/'))
 from recommender import recommend
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ def index():
         algorithm = request.form['algorithm']
 
         # Call your recommendation function with the user input and selected options
-        recommendations = recommend(similarity_function, algorithm, user_id, movie_names=True)
+        recommendations = recommend(similarity_function, algorithm, user_id, precalculated=True, movie_names=True)
         # recommendations = [{'Rank': idx + 1, 'Movie': f'Movie {movie}'} for idx, movie in enumerate(recommendations)]
 
     return render_template('index.html', recommendations=recommendations)
