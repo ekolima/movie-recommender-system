@@ -62,5 +62,5 @@ def validate_input(input, data, algorithm):
 
 def validate_preprocessed(algorithm, metric):
     # check if preprocessed data file exists
-    if not os.path.isfile(os.path.join('results, {}_{}_top_items.pkl'.format(algorithm, metric))):
+    if not os.path.isfile(os.path.join('results', '{}_{}_top_items.pkl'.format(algorithm, metric))):
         raise ValueError('Preprocessed data does not exist. Please run preprocess.py first')
