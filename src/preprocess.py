@@ -62,9 +62,6 @@ def n_most_similar_items(user_similarity_matrix, user_item_matrix, k=128):
     # rename columns
     top_similar_users.columns = ['target user id', 'user id', 'similarity']
 
-    # matrix to series
-    uim = user_item_matrix.unstack().reset_index()
-    uim.columns = ['item id', 'user id', 'rating']
     # get ratings by merging user_item_matrix
     top_similar_users_ratings = pd.merge(top_similar_users, user_item_matrix, on=['user id'])
     # get weighted ratings (similarity * columns 1, ...n)
@@ -117,7 +114,18 @@ print('Pearson done | Time elapsed: {}'.format(time.time() - start))
 
 #------------------
 # item-item
+def item_item_all(ratings):
+    for similarity in [jaccard, dice, cosine, pearson]:
+        results = dict()
+        for i in ratings['user id'].unique():
+            results[i] = item_item(i, ratings, None, similarity, True)
+        # expand to columns
+        results = pd.DataFrame.from_dict(results, orient='index')
+        # to pickle
+        results.to_pickle('../results/item_{}_top_items.pkl'.format(similarity.__name__))
 
+# create a matrix with users as rows and items as columns
+item_item_all(ratings)
 #------------------
 # tag-based
 tags_frequency = tags.groupby(['movie id', 'tag'], as_index=False).agg(count=('tag', 'count'))
@@ -150,28 +158,34 @@ tf_idf_matrix = tf_idf.pivot(index='movie id', columns='text', values='tf-idf')
 
 start = time.time()
 jaccard_content_similarity_matrix = jaccard_similarity_matrix(tf_idf_matrix.fillna(0))
-jaccard_content_similarity_matrix.to_pickle('results/title_jaccard_top_items.pkl')
+jaccard_content_similarity_matrix.to_pickle('../results/title_jaccard_top_items.pkl')
 print('Jaccard done | Time elapsed: {}'.format(time.time() - start))
 
 start = time.time()
-dice_content_similarity_matrix = dice_similarity_matrix(td_idf_matrix.fillna(0))
-dice_content_similarity_matrix.to_pickle('results/title_dice_top_items.pkl')
+dice_content_similarity_matrix = dice_similarity_matrix(tf_idf_matrix.fillna(0))
+dice_content_similarity_matrix.to_pickle('../results/title_dice_top_items.pkl')
 print('Dice done | Time elapsed: {}'.format(time.time() - start))
 
 start = time.time()
-cosine_content_similarity_matrix = cosine_similarity_matrix(td_idf_matrix.fillna(0))
-cosine_content_similarity_matrix.to_pickle('results/title_cosine_top_items.pkl')
+cosine_content_similarity_matrix = cosine_similarity_matrix(tf_idf_matrix.fillna(0))
+cosine_content_similarity_matrix.to_pickle('../results/title_cosine_top_items.pkl')
 print('Cosine done | Time elapsed: {}'.format(time.time() - start))
 
 start = time.time()
-pearson_content_similarity_matrix = pearson_similarity_matrix(td_idf_matrix)
-pearson_content_similarity_matrix.to_pickle('results/title_pearson_top_items.pkl')
+pearson_content_similarity_matrix = pearson_similarity_matrix(tf_idf_matrix)
+pearson_content_similarity_matrix.to_pickle('../results/title_pearson_top_items.pkl')
 print('Pearson done | Time elapsed: {}'.format(time.time() - start))
 
 #------------------
 # hybrid
-# add similarity user jaccard and user cosine matrices
-# jaccard_user_similarity_matrix=pd.read_pickle('results/user_jaccard_top_items.pkl')
-# cosine_user_similarity_matrix=pd.read_pickle('results/user_cosine_top_items.pkl')
-#
-# hybrid_user_similarity_matrix = jaccard_user_similarity_matrix + cosine_user_similarity_matrix
+hybrid_user_similarity_matrix = jaccard_user_similarity_matrix + jaccard_user_similarity_matrix
+hybrid_user_similarity_matrix.to_pickle('../results/hybrid_user_top_items.pkl')
+
+hybrid_user_similarity_matrix = dice_user_similarity_matrix + dice_user_similarity_matrix
+hybrid_user_similarity_matrix.to_pickle('../results/hybrid_user_top_items.pkl')
+
+hybrid_user_similarity_matrix = cosine_user_similarity_matrix + cosine_user_similarity_matrix
+hybrid_user_similarity_matrix.to_pickle('../results/hybrid_user_top_items.pkl')
+
+hybrid_user_similarity_matrix = pearson_user_similarity_matrix + pearson_user_similarity_matrix
+hybrid_user_similarity_matrix.to_pickle('../results/hybrid_user_top_items.pkl')
