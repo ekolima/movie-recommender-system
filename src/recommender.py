@@ -8,8 +8,7 @@ from validators import *
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-
-def recommend(similarity_metric, algorithm, input, number=100, data_directory='../ml-latest-small', movie_names=False):
+def recommend(similarity_metric, algorithm, input, precalculated, number=100, data_directory='../ml-latest-small', movie_names=False):
     # validate arguments
     # check if data directory exists
     validate_directory(data_directory)
@@ -35,10 +34,9 @@ def recommend(similarity_metric, algorithm, input, number=100, data_directory='.
     # check if input is in data
     validate_input(input, data, algorithm)
 
-
     # set up similarity metric and algorithm dictionaries
     similarity_dict = {'jaccard': metrics.jaccard, 'dice': metrics.dice,
-                       'cosine': metrics.cosine, 'pearson': metrics.pearson_matrix}
+                       'cosine': metrics.cosine, 'pearson': metrics.pearson}
 
     algorithm_dict = {'user': algorithms.user_user, 'item': algorithms.item_item,
                       'tag': algorithms.tag_based, 'title': algorithms.content_based,
@@ -47,12 +45,15 @@ def recommend(similarity_metric, algorithm, input, number=100, data_directory='.
     data_dict = {'user': data['ratings'], 'item': data['ratings'], 'tag': data['tags'],
                  'title': data['keywords'], 'hybrid': data}
 
-
     # get recommendations
-    result = algorithm_dict[algorithm](id=int(input),
-                                       data=data_dict[algorithm],
-                                       n=number,
-                                       similarity=similarity_dict[similarity_metric])
+    if precalculated:
+        all_results = pd.read_pickle('results/{}_{}_top_items.pkl'.format(algorithm, similarity_metric))
+        result = all_results[input].head(number).index.tolist()
+    else:
+        result = algorithm_dict[algorithm](id=int(input),
+                                           data=data_dict[algorithm],
+                                           n=number,
+                                           similarity=similarity_dict[similarity_metric])
 
     # if movie names are requested, replace movie ids with movie names
     if movie_names:
@@ -80,6 +81,8 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--algorithm', help='algorithm', required=True)
     # input: user id, movie id etc.
     parser.add_argument('-i', '--input', help='input', required=True)
+    # precalculated similarities
+    parser.add_argument('-p', '--precalculated', help='precalculated similarities', required=False, default=False)
 
     # parse arguments
     args = parser.parse_args()
@@ -88,5 +91,7 @@ if __name__ == '__main__':
     similarity_metric = args.similarity_metric
     algorithm = args.algorithm
     input = args.input
+    precalculated = args.precalculated
 
-    recommend(similarity_metric, algorithm, input, number, data_directory, movie_names=True)
+
+    recommend(similarity_metric, algorithm, input, precalculated, number, data_directory, movie_names=True)
