@@ -47,6 +47,7 @@ def recommend(similarity_metric, algorithm, input, precalculated, number=100, da
 
     # get recommendations
     if precalculated:
+        validate_preprocessed(algorithm, similarity_metric)
         all_results = pd.read_pickle('results/{}_{}_top_items.pkl'.format(algorithm, similarity_metric))
         result = all_results[input].head(number).index.tolist()
     else:
