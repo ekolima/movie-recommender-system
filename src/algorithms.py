@@ -5,13 +5,20 @@ from utils import extract_ratings
 
 
 def n_most_similar(all_users, ratings, user_ratings, k=128):
+    # keep top similar users
     all_users = all_users.sort_values('similarity', ascending=False).head(k)
+    # keep only selected users
     eligible_ratings = ratings[ratings['user id'].isin(all_users['user id'])]
+    # remove items already rated by user
     eligible_ratings = eligible_ratings[~eligible_ratings['item id'].isin(user_ratings['item id'])]
+    # merge with all users to get similarity
     eligible_ratings = eligible_ratings.merge(all_users, on='user id')
+    # calculate weighted ratings
     eligible_ratings['weighted_rating'] = eligible_ratings['rating'] * eligible_ratings['similarity']
+    # calculate total similarity
     total_similarity = sum(all_users['similarity'])
     try:
+        # calculate final rating for each item
         result = eligible_ratings.groupby('item id', as_index=False)['weighted_rating'].sum()
         result['weighted_rating'] = result['weighted_rating'] / total_similarity
         return result
@@ -47,7 +54,6 @@ def item_item(id, data, n, similarity=pearson_matrix, return_scores=False):
     if user_ratings.empty:
         return None
 
-    # todo: fix for all methodologies
     user_rated_items = user_ratings['item id'].tolist()
     user_not_rated_items = pd.DataFrame(data.loc[~data['item id'].isin(user_rated_items)]['item id'].drop_duplicates())
     if similarity.__name__ in ['jaccard', 'dice']:
@@ -89,8 +95,6 @@ def tag_based(id, data, n, similarity=jaccard, return_scores=False):
             apply(lambda x: similarity(tag_target, x.drop('movie id', axis=1), extract_column='user id', id_col='tag'))
 
     tag_similarities.columns = ['movie id', 'similarity']
-
-    # TODO: expection handling
 
     # find n most similar movies
     if return_scores:
