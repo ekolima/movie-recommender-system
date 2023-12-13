@@ -5,13 +5,16 @@ import pandas as pd
 
 def jaccard(a, b, extract_column=None):
     try:
+        # If extract_column is not None, extract the column from the dataframe
         if extract_column is not None:
             a = a[extract_column]
             b = b[extract_column]
 
+        # Convert to sets
         set_a = set(a)
         set_b = set(b)
 
+        # Calculate Jaccard similarity
         intersection_size = len(set_a.intersection(set_b))
         union_size = len(set_a.union(set_b))
 
@@ -22,15 +25,19 @@ def jaccard(a, b, extract_column=None):
     except ZeroDivisionError:
         pass
 
+
 def dice(a, b, extract_column=None):
     try:
+        # If extract_column is not None, extract the column from the dataframe
         if extract_column is not None:
             a = a[extract_column]
             b = b[extract_column]
 
+        # Convert to sets
         a_set = set(a)
         b_set = set(b)
 
+        # Calculate Dice similarity
         return 2 * len(a_set.intersection(b_set)) / (len(a_set) + len(b_set))
     except KeyError:
         pass
@@ -78,7 +85,7 @@ def pearson(a, b, extract_column='rating', id_col='item id'):
         ratings_a = ratings_a.reindex(all_items)
         ratings_b = ratings_b.reindex(all_items)
 
-        # Convert to NumPy arrays for more efficient calculations
+        # Convert Series to NumPy arrays
         array_a = ratings_a.values
         array_b = ratings_b.values
 
@@ -102,21 +109,6 @@ def pearson(a, b, extract_column='rating', id_col='item id'):
         pass
 
 
-def pearson_matrix(matrix, x_target, k=128):
-    target_row = matrix.loc[x_target]
-    target_row = target_row - np.mean(target_row)
-    target_row_sqrt = np.sqrt(sum(target_row ** 2))
-
-    matrix = matrix.drop(x_target)
-    matrix['mean'] = matrix.mean(axis=1)
-    matrix = matrix.sub(matrix['mean'], axis=0)
-    matrix = matrix.drop('mean', axis=1)
-
-    # multiply each row in matrix times target_row
-    matrix = matrix.apply(lambda row: sum(row * target_row)/(np.sqrt(sum(row ** 2)) * target_row_sqrt), axis=1)
-    return matrix.sort_values(ascending=False).head(k)
-
-
 def jaccard_similarity_matrix(user_item_matrix):
     # Convert the user-item matrix to a binary matrix (1 if rated, 0 otherwise)
     zero_one_matrix = np.where(user_item_matrix > 0, 1, 0)
@@ -131,7 +123,7 @@ def jaccard_similarity_matrix(user_item_matrix):
     jaccard_matrix = np.asmatrix(jaccard_matrix)
     np.fill_diagonal(jaccard_matrix, 1.0)
 
-    # Convert the NumPy array to a DataFrame with user IDs as index and columns
+    # Convert the NumPy array to a DataFrame with IDs as index and columns
     user_similarity_matrix = pd.DataFrame(jaccard_matrix, index=user_item_matrix.index, columns=user_item_matrix.index)
 
     return user_similarity_matrix
@@ -142,7 +134,7 @@ def dice_similarity_matrix(user_item_matrix):
     zero_one_matrix = np.where(user_item_matrix > 0, 1, 0)
     binary_matrix = user_item_matrix > 0
 
-    # Calculate the Jaccard similarity matrix
+    # Calculate the Dice similarity matrix
     numerator = zero_one_matrix @ zero_one_matrix.T
     denominator = np.clip(binary_matrix.sum(axis=1).values.reshape(-1, 1) + binary_matrix.sum(axis=1).values, 1, None)
     jaccard_matrix = 2 * numerator / denominator
@@ -151,7 +143,7 @@ def dice_similarity_matrix(user_item_matrix):
     jaccard_matrix = np.asmatrix(jaccard_matrix)
     np.fill_diagonal(jaccard_matrix, 1.0)
 
-    # Convert the NumPy array to a DataFrame with user IDs as index and columns
+    # Convert the NumPy array to a DataFrame with IDs as index and columns
     user_similarity_matrix = pd.DataFrame(jaccard_matrix, index=user_item_matrix.index, columns=user_item_matrix.index)
 
     return user_similarity_matrix
@@ -168,7 +160,7 @@ def cosine_similarity_matrix(user_item_matrix):
     # Set the diagonal elements to 1.0
     np.fill_diagonal(cosine_matrix, 1.0)
 
-    # Convert the NumPy array to a DataFrame with user IDs as index and columns
+    # Convert the NumPy array to a DataFrame with IDs as index and columns
     user_similarity_matrix = pd.DataFrame(cosine_matrix, index=user_item_matrix.index, columns=user_item_matrix.index)
 
     return user_similarity_matrix
@@ -199,6 +191,7 @@ def pearson_similarity_matrix(user_item_matrix):
     pearson_matrix = np.asmatrix(pearson_matrix)
     np.fill_diagonal(pearson_matrix, 1.0)
 
+    # Convert the NumPy array to a DataFrame with IDs as index and columns
     user_similarity_matrix = pd.DataFrame(pearson_matrix, index=user_item_matrix.index, columns=user_item_matrix.index)
 
     return user_similarity_matrix
