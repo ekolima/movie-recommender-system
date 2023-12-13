@@ -55,17 +55,22 @@ def generate_keywords(df):
     return df
 
 
-def get_data(data_directory='ml-latest-small'):
+def get_data(data_directory='ml-latest-small', get_all=True):
     print('--------------------------------------------------------------------------------')
     print(f'Loading data from directory {data_directory}')
 
     try:
-        ratings = get_ratings(directory=data_directory)
-        tags = get_tags(directory=data_directory)
+        if get_all:
+            ratings = get_ratings(directory=data_directory)
+            tags = get_tags(directory=data_directory)
         movies = get_movies(directory=data_directory)
-        keywords = generate_keywords(movies.copy())
+        if get_all:
+            keywords = generate_keywords(movies.copy())
     except Exception as e:
         print(f'Error: {e}')
         return None
 
-    return {'ratings': ratings, 'tags': tags, 'movies': movies, 'keywords': keywords}
+    if get_all:
+        return {'ratings': ratings, 'tags': tags, 'movies': movies, 'keywords': keywords}
+    else:
+        return {'movies': movies}
